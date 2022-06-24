@@ -1,0 +1,86 @@
+<?php
+$title = "Register form";
+require_once './template/header.php';
+require './config/database.php';
+if(isset($_SESSION["logged_in"])){
+    header("location:index.php");
+}
+$name="";
+$email = "";
+$errors = [];
+if($_SERVER["REQUEST_METHOD"] == "POST"){
+    $email = mysqli_real_escape_string($mysqli,$_POST["email"]);
+    $name = mysqli_real_escape_string($mysqli,$_POST["name"]);
+    $password = mysqli_real_escape_string($mysqli,$_POST["password"]);
+    $password_confirmation = mysqli_real_escape_string($mysqli,$_POST["password_confirmation"]);
+  
+    if(empty($email)){array_push($errors,"Email is required");}
+    if(empty($name)){array_push($errors,"name is required");}
+    if(empty($password)){array_push($errors,"password is required");}
+    if(empty($password_confirmation)){array_push($errors,"password_confirmation is required");}
+    if($password != $password_confirmation){array_push($errors,"passwords dont match");}
+
+    
+    if(count($errors)==0){
+        $userExist = $mysqli->query("select email from users where email = '$email' limit 1");
+
+        if($userExist->num_rows){
+            array_push($errors,"Email is already registered");
+        }
+
+    }
+
+    if(count($errors)==0){
+    $password =  password_hash($password,PASSWORD_DEFAULT);
+     $query = "INSERT INTO users(email,name,password) VALUES('$email','$name','$password')";
+     $mysqli->query($query);
+
+     $_SESSION["logged_in"] = true;
+     $_SESSION["user_id"] = $mysqli->insert_id;
+     $_SESSION["user_name"] = $name;
+     $_SESSION["success_message"] = "$name,Welcome Back";
+     header("location:index.php");
+    }
+  }
+
+?>
+
+<div class="container pt-5">
+<div class="row col-md-6 mx-auto">
+ <h4 class="text-muted">Please fill in your information</h4>
+ <hr>
+ <?php include "./template/errors.php" ?>
+ <form action="" method="post">
+     <div class="form-group my-3">
+         <label for="email">email</label>
+         <input type="text" class="form-control" name="email" id="email" placeholder="Enter your email" value="<?php echo $email?>" >
+     </div>
+
+    <div class="form-group my-3">
+        <label for="name">Name</label>
+        <input type="text" class="form-control" name="name" id="name" placeholder="Enter your name" value="<?php echo $name?>" >
+    </div>
+
+
+    <div class="form-group my-3">
+        <label for="password">password</label>
+        <input type="password" class="form-control" name="password" id="password" placeholder="Enter your password" >
+    </div>
+
+    <div class="form-group my-3">
+        <label for="password_confirmation">Confirm password</label>
+        <input type="password" class="form-control" name="password_confirmation" id="password_confirmation" placeholder="Enter your password again" >
+    </div>
+
+    <div class="form-group my-3">
+        <button class="btn btn-success">Submit</button>
+        <a href="login.php">already have an account?</a>
+    </div>
+
+ </form>
+</div>
+</div>
+
+<?php 
+
+?>
